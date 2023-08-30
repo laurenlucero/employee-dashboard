@@ -1,34 +1,36 @@
-// import dependencies
-const axios = require("axios");
-
 // Contribution limits for different age groups (2023)
 const CONTRIBUTION_LIMIT_STANDARD = 3900;
 const CONTRIBUTION_LIMIT_CATCH_UP = 1000;
-
 // Age at which catch-up contributions can be made (2023)
 const CATCH_UP_AGE = 55;
 
 async function fetchEmployeeData() {
-  // hide api key
+  // TODO hide api key
   const apiKey =
     "patawZWIa4hg1HinJ.260bae64187b68bb9e6de8c081b10a1d2f5b66e750839c84f616e978267ea31d";
   const endpoint =
     "https://api.airtable.com/v0/appekA493GuXz8uDK/tbllLFdZDMfLjAT4N";
 
   try {
-    const response = await axios.get(endpoint, {
+    const response = await fetch(endpoint, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
     });
 
-    // Data is available in response.data
-    const records = response.data.records;
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const records = data.records;
     processEmployeeRecords(records);
   } catch (error) {
     console.error("Error fetching employee data:", error.message);
   }
 }
+
+fetchEmployeeData();
 
 function processEmployeeRecords(records) {
   const today = new Date();
@@ -66,8 +68,8 @@ function prepareAndDisplayData(processedData) {
       maxContribution,
     };
   });
-  console.log(displayedData);
-  //   createAndDisplayTable(displayedData);
+
+  createAndDisplayTable(displayedData);
 }
 
 function calculateAge(birthdate, currentDate) {
@@ -119,4 +121,20 @@ function getCatchUpContribution(age) {
   return age >= CATCH_UP_AGE ? CONTRIBUTION_LIMIT_CATCH_UP : 0;
 }
 
-fetchEmployeeData();
+function createAndDisplayTable(displayedData) {
+  const tbody = document.querySelector("tbody");
+
+  displayedData.forEach((employee) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+    <td>${employee.employeeName}</td>
+    <td>${employee.planType}</td>
+    <td>${employee.deductible}</td>
+    <td>${employee.age}</td>
+    <td>${employee.isHsaEligible ? "Yes" : "No"}</td>
+    <td>${employee.maxContribution}</td>
+  `;
+
+    tbody.appendChild(row);
+  });
+}
